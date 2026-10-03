@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp, Phone, X, ShieldAlert } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, X, ShieldAlert } from "lucide-react";
 import { CURRENT_EMERGENCY_ALERT } from "@/lib/data";
 
 export default function EmergencyAlertBanner() {
@@ -73,7 +73,7 @@ export default function EmergencyAlertBanner() {
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded bg-black/20 hover:bg-black/30 text-[11px] sm:text-xs font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-black/20 hover:bg-black/30 text-[11px] sm:text-xs font-semibold text-white transition-colors"
               aria-expanded={isExpanded}
             >
               <span>{isExpanded ? "Less Details" : "Details"}</span>
@@ -83,16 +83,6 @@ export default function EmergencyAlertBanner() {
                 <ChevronDown className="h-3.5 w-3.5" />
               )}
             </button>
-
-            <a
-              href="tel:09175554321"
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white text-slate-900 hover:bg-amber-100 text-[11px] sm:text-xs font-bold transition-transform active:scale-95 shadow-sm"
-              title="Call Barangay Hotline"
-            >
-              <Phone className="h-3 w-3 text-red-600 fill-current" />
-              <span className="hidden sm:inline">Emergency Hotline</span>
-              <span className="sm:hidden">Call</span>
-            </a>
 
             <button
               onClick={() => setIsDismissed(true)}

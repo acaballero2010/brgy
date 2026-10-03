@@ -59,11 +59,20 @@ export const TODAY_OPERATING_STATUS: OperatingStatus = {
 };
 
 export const DISASTER_STATUS = {
-  level: "SIGNAL NO. 1",
-  color: "amber",
-  summary: "Tropical Depression Preparedness Mode",
-  monitoredAreas: "Riverside Purok 2 & Lowland Purok 5",
-  lastUpdated: "Updated 35 mins ago",
+  // Axis 1: PAGASA Heavy Rainfall Warning System (Precipitation / Flooding)
+  rainfallAlert: "ORANGE RAINFALL WARNING",
+  rainfallSummary: "Flooding Threatening in Low-Lying Puroks",
+  
+  // Axis 2: PAGASA Tropical Cyclone Wind Signal (TCWS - Severe Winds)
+  windSignal: "TCWS SIGNAL NO. 1",
+  windSummary: "Tropical Depression Preparedness Mode",
+
+  // Combined overview
+  level: "SIGNAL NO. 1 (Wind) • ORANGE (Rainfall)",
+  summary: "Dual PAGASA Advisory Active",
+  monitoredAreas: "Riverside Purok 2, Purok 4 & Lowland Purok 5",
+  lastUpdated: "Updated 15 mins ago",
+  evacuationCenter: "Pamplona Uno Multi-Purpose Gymnasium",
 };
 
 export const MOCK_ANNOUNCEMENTS: Announcement[] = [
