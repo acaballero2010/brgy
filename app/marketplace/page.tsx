@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Store,
@@ -12,17 +12,27 @@ import {
   PlusCircle,
   MessageSquare,
   X,
-  ShoppingBag
+  ShoppingBag,
+  ShieldCheck
 } from "lucide-react";
 import { MOCK_MARKETPLACE_ITEMS } from "@/lib/economy-data";
 import { MarketplaceCategory, MarketplaceItem } from "@/types/economy";
+import { useAuth } from "@/context/AuthContext";
+import {
+  getMarketplaceItems,
+  createMarketplaceItem,
+  seedMarketplaceIfEmpty
+} from "@/lib/firebase/marketplace";
 
 export default function MarketplacePage() {
+  const { profile } = useAuth();
+  const [items, setItems] = useState<MarketplaceItem[]>(MOCK_MARKETPLACE_ITEMS);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeItem, setActiveItem] = useState<MarketplaceItem | null>(null);
   const [showSellModal, setShowSellModal] = useState(false);
   const [sellSuccess, setSellSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // New Listing Form State
   const [newTitle, setNewTitle] = useState("");
@@ -30,8 +40,32 @@ export default function MarketplacePage() {
   const [newCategory, setNewCategory] = useState<MarketplaceCategory>("FOOD");
   const [newSellerName, setNewSellerName] = useState("");
   const [newPhone, setNewPhone] = useState("");
-  const [newPurok, setNewPurok] = useState("Purok 1 (Riverside)");
+  const [newPurok, setNewPurok] = useState("Purok 3");
   const [newDesc, setNewDesc] = useState("");
+
+  // Load items from Firestore on mount
+  useEffect(() => {
+    let isMounted = true;
+    seedMarketplaceIfEmpty();
+    getMarketplaceItems().then((liveItems) => {
+      if (isMounted && liveItems.length > 0) {
+        setItems(liveItems);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Open modal and pre-fill seller info from resident profile
+  const handleOpenSellModal = () => {
+    if (profile) {
+      if (!newSellerName) setNewSellerName(profile.fullName);
+      if (!newPhone) setNewPhone(profile.mobileNumber);
+      if (profile.purok) setNewPurok(profile.purok);
+    }
+    setShowSellModal(true);
+  };
 
   const categories = [
     { id: "ALL", label: "All Items" },
@@ -40,7 +74,7 @@ export default function MarketplacePage() {
     { id: "SERVICES", label: "Local Services & Crafts" },
   ];
 
-  const filteredItems = MOCK_MARKETPLACE_ITEMS.filter((item) => {
+  const filteredItems = items.filter((item) => {
     const matchesCategory =
       selectedCategory === "ALL" || item.category === selectedCategory;
     const q = searchQuery.toLowerCase().trim();
@@ -74,7 +108,7 @@ export default function MarketplacePage() {
 
           <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <button
-              onClick={() => setShowSellModal(true)}
+              onClick={handleOpenSellModal}
               className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-transform active:scale-95 flex items-center gap-1.5"
             >
               <PlusCircle className="h-4 w-4" />
@@ -272,10 +306,16 @@ export default function MarketplacePage() {
                     Resident Seller
                   </span>
                   <h3 className="text-xl font-black text-slate-900 mt-1">Post Item for Sale</h3>
+                  {profile && (
+                    <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
+                      <ShieldCheck className="h-3 w-3" />
+                      Posting as Verified Resident: {profile.fullName} ({profile.purok})
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => setShowSellModal(false)}
-                  className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -286,7 +326,7 @@ export default function MarketplacePage() {
                   <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
-                  <h4 className="text-base font-bold text-emerald-950">Item Successfully Listed!</h4>
+                  <h4 className="text-base font-bold text-emerald-950">Item Successfully Listed to Firestore!</h4>
                   <p className="text-xs text-emerald-800">
                     Your listing is now live on the Pamplona Uno Talipapa marketplace. Neighbors can call or text you directly.
                   </p>
@@ -295,18 +335,24 @@ export default function MarketplacePage() {
                 <form
                   onSubmit={async (e) => {
                     e.preventDefault();
+                    setIsSubmitting(true);
                     try {
-                      const { createMarketplaceListing } = await import("@/app/actions/economy-actions");
-                      await createMarketplaceListing({
-                        sellerName: newSellerName || "Resident Seller",
-                        sellerPurok: newPurok,
-                        sellerPhone: newPhone || "0917-000-1122",
+                      const newItem = await createMarketplaceItem({
+                        sellerId: profile?.uid || `usr-${Date.now().toString(36)}`,
+                        sellerName: newSellerName || profile?.fullName || "Pamplona Uno Resident",
+                        sellerPurok: newPurok || profile?.purok || "Purok 3",
+                        sellerPhone: newPhone || profile?.mobileNumber || "0917-000-0000",
                         title: newTitle,
                         description: newDesc || "Fresh local item from Pamplona Uno resident.",
                         price: Number(newPrice) || 100,
                         category: newCategory,
+                        images: ["https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80"],
+                        availabilityStatus: "AVAILABLE",
                         meetupOrDelivery: "PUROK_DELIVERY",
+                        isVerifiedResidentSeller: !!profile?.isVerified,
                       });
+
+                      setItems((prev) => [newItem, ...prev]);
                       setSellSuccess(true);
                       setTimeout(() => {
                         setSellSuccess(false);
@@ -317,11 +363,8 @@ export default function MarketplacePage() {
                       }, 2000);
                     } catch (err) {
                       console.error("Listing error:", err);
-                      setSellSuccess(true);
-                      setTimeout(() => {
-                        setSellSuccess(false);
-                        setShowSellModal(false);
-                      }, 2000);
+                    } finally {
+                      setIsSubmitting(false);
                     }
                   }}
                   className="space-y-4 text-xs"
@@ -428,9 +471,10 @@ export default function MarketplacePage() {
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-xs active:scale-95"
+                      disabled={isSubmitting}
+                      className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-xs active:scale-95 disabled:opacity-50 cursor-pointer"
                     >
-                      Publish Listing
+                      {isSubmitting ? "Publishing to Firestore..." : "Publish Listing"}
                     </button>
                   </div>
                 </form>
