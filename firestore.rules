@@ -1,0 +1,81 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.role == 'admin' || request.auth.token.email.matches('.*@pamplonauno\\.gov\\.ph'));
+    }
+
+    // 1. Announcements & Bulletins: Public read, Admin write
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 2. Directory & Officials: Public read, Admin write
+    match /directory/{contactId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 3. Document Requests: Citizens can create, track, and update
+    match /document_requests/{trackingCode} {
+      allow read: if true; // Public lookup by exact tracking reference
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    // 4. Incident Reports (Sumbong Desk): Citizens can create, read public board (anonymized)
+    match /incident_reports/{reportId} {
+      allow read: if true;
+      allow create: if request.resource.data.title != null && request.resource.data.category != null;
+      allow update, delete: if isAdmin();
+    }
+
+    // 5. TODA Drivers & Realtime Dispatch
+    match /drivers/{driverId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /rides/{rideId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if true; // Allows driver acceptance and status progression
+    }
+
+    // 6. Pabili & Padala Errands
+    match /errands/{errandId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if true; // Runner acceptance and delivery completion
+    }
+
+    // 7. Community Marketplace (Talipapa)
+    match /marketplace_items/{itemId} {
+      allow read: if true;
+      allow create: if request.resource.data.title != null;
+      allow update, delete: if true;
+    }
+
+    // 8. Barangay Job Board
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+
+    // 9. Emergency Alert Configuration
+    match /system_config/{configId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
