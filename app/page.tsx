@@ -8,16 +8,13 @@ import {
   Clock,
   ArrowRight,
   AlertTriangle,
-  Search,
   Sparkles,
   ChevronRight,
   Activity,
   Bike,
   ShoppingBag,
   Briefcase,
-  MapPin,
-  Building,
-  ShieldCheck
+  Building
 } from "lucide-react";
 import {
   TODAY_OPERATING_STATUS,
@@ -31,204 +28,67 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8 sm:space-y-12 pb-16">
-      {/* 1. Hero Section */}
-      <section className="relative bg-linear-to-b from-blue-950 via-slate-900 to-blue-900 text-white pt-8 pb-16 sm:pt-14 sm:pb-24 overflow-hidden">
-        {/* Soft Ambient Radial Glows (No harsh screen dot patterns) */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+      {/* 1. Hero Section (Centered 1-Column, Breathable Civic Layout) */}
+      <section className="relative bg-linear-to-b from-blue-950 via-slate-900 to-blue-900 text-white pt-12 pb-20 sm:pt-16 sm:pb-28 overflow-hidden">
+        {/* Soft Ambient Radial Accents */}
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-            {/* Left Hero Core Content */}
-            <div className="max-w-2xl space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-xs border border-white/15 text-xs font-semibold text-amber-300">
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                <span>e-Governance Portal • City of Las Piñas, Metro Manila</span>
-              </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-xs border border-white/15 text-xs font-semibold text-amber-300 mb-6">
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            <span>e-Governance Portal • City of Las Piñas, Metro Manila</span>
+          </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight text-white">
-                Serbisyong Tapat at Maasahan para sa Bawat Mamamayan.
-              </h1>
+          {/* Headline */}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight text-white max-w-3xl mx-auto">
+            Serbisyong Tapat at Maasahan para sa Bawat Mamamayan.
+          </h1>
 
-              <p className="text-sm sm:text-base text-slate-200 leading-relaxed max-w-xl">
-                Welcome to the digital frontline of Barangay Pamplona Uno, Las Piñas City. Request official clearances, file community sumbong reports, book local tricycles, and access emergency services 24/7.
-              </p>
+          {/* Subtitle */}
+          <p className="mt-5 text-sm sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto">
+            Welcome to the digital frontline of Barangay Pamplona Uno, Las Piñas City. Request official clearances, submit community sumbong reports, and access 24/7 public services online.
+          </p>
 
-              {/* Primary Action Buttons (2-Column Prominent Layout) */}
-              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <Link
-                  href="/services"
-                  className="flex-1 inline-flex items-center justify-between p-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black shadow-lg transition-transform active:scale-95 group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-slate-950/10 shrink-0">
-                      <FileText className="h-6 w-6 text-slate-950" />
-                    </div>
-                    <div className="text-left">
-                      <span className="text-sm sm:text-base block leading-tight font-black">
-                        Request Document
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-800 block mt-0.5">
-                        Clearance • Indigency • Residency
-                      </span>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1 shrink-0 ml-2" />
-                </Link>
+          {/* Primary Action Buttons (Restrained 2-Color Hierarchy) */}
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-md mx-auto">
+            {/* Primary Action: Solid Amber Accent */}
+            <Link
+              href="/services"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm shadow-md transition-all active:scale-95 group"
+            >
+              <FileText className="h-4 w-4 text-slate-950" />
+              <span>Request Document</span>
+              <ArrowRight className="h-4 w-4 ml-0.5 transition-transform group-hover:translate-x-1" />
+            </Link>
 
-                <Link
-                  href="/reports/new"
-                  className="flex-1 inline-flex items-center justify-between p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold backdrop-blur-md shadow-lg transition-transform active:scale-95 group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-white/10 shrink-0">
-                      <AlertCircle className="h-6 w-6 text-amber-400" />
-                    </div>
-                    <div className="text-left">
-                      <span className="text-sm sm:text-base block leading-tight font-black text-white">
-                        Report Concern
-                      </span>
-                      <span className="text-[11px] font-medium text-slate-300 block mt-0.5">
-                        Sumbong Desk • Tanod Patrol
-                      </span>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1 shrink-0 ml-2" />
-                </Link>
-              </div>
+            {/* Secondary Action: Clean Ghost / Outline Button */}
+            <Link
+              href="/reports/new"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-white/25 hover:bg-white/10 text-white font-bold text-sm backdrop-blur-xs transition-colors active:scale-95 group"
+            >
+              <AlertCircle className="h-4 w-4 text-amber-300" />
+              <span>Report Concern</span>
+              <ArrowRight className="h-4 w-4 ml-0.5 transition-transform group-hover:translate-x-1 text-slate-300 group-hover:text-white" />
+            </Link>
+          </div>
 
-              {/* Secondary Utility: Quick Tracking Input Strip */}
-              <div className="pt-2">
-                <p className="text-xs text-slate-300 font-medium mb-1.5">
-                  Already transacted? Track your document application or incident reference:
-                </p>
-                <form
-                  action="/services/track"
-                  method="GET"
-                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 max-w-lg bg-white/10 p-1.5 rounded-2xl backdrop-blur-md border border-white/20"
-                >
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
-                      type="text"
-                      name="code"
-                      placeholder="Enter Tracking Reference (e.g. DOC-2026-X8K9M)"
-                      className="w-full bg-white text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm pl-10 pr-3 py-2.5 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-400 font-medium"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm transition-all shadow-sm shrink-0 flex items-center justify-center gap-1.5 active:scale-95"
-                  >
-                    <span>Track Status</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* Right: Live Dispatch & Quick Shortcuts Widget */}
-            <div className="hidden lg:flex flex-col p-6 rounded-3xl bg-white/10 border border-white/15 backdrop-blur-md w-full max-w-md text-left shadow-2xl space-y-4">
-              {/* Header Badge */}
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs font-black tracking-wider uppercase text-emerald-300">
-                    Live Dispatch Desk
-                  </span>
-                </div>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-white/15 text-slate-200">
-                  24/7 Operations
-                </span>
-              </div>
-
-              {/* Duty Officer & Outpost Information */}
-              <div className="space-y-1.5">
-                <p className="text-xs font-extrabold text-white flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-amber-400 shrink-0" />
-                  <span>{TODAY_OPERATING_STATUS.officerOnDuty}</span>
-                </p>
-                <p className="text-[11px] text-slate-300 flex items-center gap-2 pl-6">
-                  <MapPin className="h-3.5 w-3.5 text-blue-300 shrink-0" />
-                  <span>Main Desk: Alabang-Zapote Rd. Tanod Outpost</span>
-                </p>
-              </div>
-
-              {/* 3 Direct Shortcut Action Buttons */}
-              <div className="space-y-2">
-                <Link
-                  href="/services/toda/book"
-                  className="flex items-center justify-between p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 text-white transition-all group active:scale-[0.99]"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-amber-400 text-slate-950 font-bold shrink-0">
-                      <Bike className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-black block group-hover:text-amber-300 transition-colors">
-                        Request Tricycle / TODA
-                      </span>
-                      <span className="text-[11px] text-slate-300 block">
-                        Pamplona Uno Trike Dispatch • Fixed Fare
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-                </Link>
-
-                <Link
-                  href="/services/pabili/new"
-                  className="flex items-center justify-between p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 text-white transition-all group active:scale-[0.99]"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-400 text-slate-950 font-bold shrink-0">
-                      <ShoppingBag className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-black block group-hover:text-emerald-300 transition-colors">
-                        Pabili Errand Runner
-                      </span>
-                      <span className="text-[11px] text-slate-300 block">
-                        Talipapa market, grocery & medicine
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-                </Link>
-
-                <Link
-                  href="/directory"
-                  className="flex items-center justify-between p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 text-white transition-all group active:scale-[0.99]"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-blue-400 text-slate-950 font-bold shrink-0">
-                      <Building className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-black block group-hover:text-blue-300 transition-colors">
-                        View Evacuation Centers
-                      </span>
-                      <span className="text-[11px] text-slate-300 block">
-                        Multi-Purpose Gym & School Shelters
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-                </Link>
-              </div>
-
-              {/* Footer Benchmark */}
-              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300">
-                <span>⚡ Tanod Response Time:</span>
-                <span className="font-extrabold text-emerald-400">&lt; 10 Mins (7 Puroks)</span>
-              </div>
-            </div>
+          {/* Secondary Lookup Link (Separating Action from Lookup) */}
+          <div className="mt-5">
+            <Link
+              href="/services/track"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-slate-300 hover:text-white transition-colors underline-offset-4 hover:underline font-medium"
+            >
+              <span>Already submitted an application? Check status</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </div>
       </section>
 
       {/* 2. Quick Status Cards Section (Interactive & Baseline-Aligned) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 sm:-mt-12 relative z-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-14 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Status Card 1: Disaster Preparedness Level (Dual PAGASA Axes: Rainfall + Wind) */}
           <Link
@@ -326,123 +186,182 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. Lower Fold: Quick Services Grid (4 Essential Community Features) */}
+      {/* 3. Dedicated Quick Community Services Grid (Relocated from Hero) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-900 bg-blue-50 px-2.5 py-0.5 rounded-full mb-1">
-            <Activity className="h-3.5 w-3.5" />
-            Barangay Community Platform
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-900 bg-blue-50 px-2.5 py-0.5 rounded-full mb-1">
+              <Activity className="h-3.5 w-3.5" />
+              Barangay Community Platform
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Quick Community Services
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              One-stop access to barangay clearances, commuter dispatch, neighborhood marketplace, and community resources.
+            </p>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Key Services & Citizen Hub
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Access document clearances, local commuter dispatch, neighborhood marketplace, and community job openings.
-          </p>
+
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-medium">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Tanod Response &lt; 10 Mins Across 7 Puroks</span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* Service 1: Barangay Clearance & Indigency */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Card 1: Barangay Clearance & Indigency */}
           <Link
             href="/services"
-            className="group relative bg-white rounded-3xl p-6 border border-slate-200 hover:border-blue-500 hover:shadow-xl transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
+            className="group bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
           >
             <div>
-              <div className="h-12 w-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-2xs">
-                <FileText className="h-6 w-6" />
+              <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-800 flex items-center justify-center mb-3.5 group-hover:bg-blue-900 group-hover:text-white transition-colors">
+                <FileText className="h-5 w-5" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
                 Official Certifications
               </span>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-700 transition-colors mt-0.5">
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-900 transition-colors mt-0.5">
                 Barangay Clearance & Indigency
               </h3>
-              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                Apply online for Barangay Clearance, Certificate of Indigency, and Residency with digital claim vouchers.
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Apply online for Barangay Clearance, Indigency, and Residency with digital claim vouchers.
               </p>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-700">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-900">
               <span>Apply for Certificate</span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </div>
           </Link>
 
-          {/* Service 2: TODA Trike Dispatch */}
+          {/* Card 2: TODA Trike Dispatch */}
           <Link
-            href="/services/toda"
-            className="group relative bg-white rounded-3xl p-6 border border-slate-200 hover:border-amber-500 hover:shadow-xl transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
+            href="/services/toda/book"
+            className="group bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 hover:border-amber-500 hover:shadow-lg transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
           >
             <div>
-              <div className="h-12 w-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mb-4 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors shadow-2xs">
-                <Bike className="h-6 w-6" />
+              <div className="h-11 w-11 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center mb-3.5 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+                <Bike className="h-5 w-5" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
-                Commuter Mobility
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                PUTODA Commuter Dispatch
               </span>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-amber-700 transition-colors mt-0.5">
-                TODA Trike Dispatch
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-700 transition-colors mt-0.5">
+                Request Tricycle / TODA
               </h3>
-              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                Regulated tricycle booking with official Sangguniang Bayan metered fares and 20% senior/student discount.
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                On-demand tricycle booking with official Sangguniang Bayan metered fares and statutory discounts.
               </p>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-700">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-800">
               <span>Book a Trike Ride</span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </div>
           </Link>
 
-          {/* Service 3: Pabili & Community Market */}
+          {/* Card 3: Pabili Errand Runner & Market */}
           <Link
-            href="/marketplace"
-            className="group relative bg-white rounded-3xl p-6 border border-slate-200 hover:border-emerald-500 hover:shadow-xl transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
+            href="/services/pabili/new"
+            className="group bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 hover:border-emerald-500 hover:shadow-lg transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
           >
             <div>
-              <div className="h-12 w-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-2xs">
-                <ShoppingBag className="h-6 w-6" />
+              <div className="h-11 w-11 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center mb-3.5 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                <ShoppingBag className="h-5 w-5" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
                 Talipapa & Errands
               </span>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-emerald-700 transition-colors mt-0.5">
-                Pabili & Community Market
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors mt-0.5">
+                Pabili Errand Runner
               </h3>
-              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                Order wet market produce, neighborhood food, or request a trusted barangay runner for medicine and grocery.
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Order wet market produce, talipapa groceries, or hire a trusted barangay runner for medicine delivery.
               </p>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700">
-              <span>Explore Marketplace</span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-800">
+              <span>Request Errand Runner</span>
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </div>
           </Link>
 
-          {/* Service 4: Barangay Job Openings */}
+          {/* Card 4: Barangay Job Openings */}
           <Link
             href="/jobs"
-            className="group relative bg-white rounded-3xl p-6 border border-slate-200 hover:border-purple-500 hover:shadow-xl transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
+            className="group bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 hover:border-purple-500 hover:shadow-lg transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
           >
             <div>
-              <div className="h-12 w-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors shadow-2xs">
-                <Briefcase className="h-6 w-6" />
+              <div className="h-11 w-11 rounded-xl bg-purple-50 text-purple-800 flex items-center justify-center mb-3.5 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                <Briefcase className="h-5 w-5" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700">
                 Local Livelihood
               </span>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-purple-700 transition-colors mt-0.5">
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-purple-700 transition-colors mt-0.5">
                 Barangay Job Openings
               </h3>
-              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                Discover verified community gigs, carpentry, helper roles, and PESO-accredited local employment vacancies.
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Discover verified community gigs, carpentry, helpers, and PESO-accredited hiring within Pamplona Uno.
               </p>
             </div>
 
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-700">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-800">
               <span>Find Local Gigs</span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+            </div>
+          </Link>
+
+          {/* Card 5: Evacuation Centers & Tanod Outpost */}
+          <Link
+            href="/directory"
+            className="group bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 hover:border-red-400 hover:shadow-lg transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
+          >
+            <div>
+              <div className="h-11 w-11 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center mb-3.5 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                <Building className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                Emergency & Shelters
+              </span>
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-red-700 transition-colors mt-0.5">
+                View Evacuation Centers
+              </h3>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Multi-Purpose Gymnasium, designated school shelters, and Alabang-Zapote Rd. Tanod Outpost locations.
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-800">
+              <span>View Shelter Map & Directory</span>
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+            </div>
+          </Link>
+
+          {/* Card 6: Sumbong Incident Board */}
+          <Link
+            href="/reports"
+            className="group bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 hover:border-amber-500 hover:shadow-lg transition-all duration-200 flex flex-col justify-between active:scale-[0.99]"
+          >
+            <div>
+              <div className="h-11 w-11 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center mb-3.5 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                Citizen Watchdesk
+              </span>
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-700 transition-colors mt-0.5">
+                Sumbong Resolution Board
+              </h3>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Public incident tracker for reported streetlights, uncollected waste, drainage issues, and Tanod resolutions.
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-800">
+              <span>View Resolution Feed</span>
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </div>
           </Link>
         </div>
