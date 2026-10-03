@@ -8,6 +8,7 @@ import {
   Clock,
   ArrowRight,
   AlertTriangle,
+  Search,
   Sparkles,
   ChevronRight,
   Activity,
@@ -22,73 +23,95 @@ import {
   MOCK_ANNOUNCEMENTS,
   QUICK_SERVICES
 } from "@/lib/data";
+import BarangaySeal from "@/components/common/BarangaySeal";
 
 export default function HomePage() {
   const latestThreeNews = MOCK_ANNOUNCEMENTS.slice(0, 3);
 
   return (
     <div className="space-y-8 sm:space-y-12 pb-16">
-      {/* 1. Hero Section (Centered 1-Column, Breathable Civic Layout) */}
-      <section className="relative bg-linear-to-b from-blue-950 via-slate-900 to-blue-900 text-white pt-12 pb-20 sm:pt-16 sm:pb-28 overflow-hidden">
-        {/* Soft Ambient Radial Accents */}
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* 1. Hero Section */}
+      <section className="relative bg-linear-to-b from-blue-900 via-blue-950 to-slate-900 text-white pt-8 pb-14 sm:pt-12 sm:pb-20 overflow-hidden">
+        {/* Background decorative glow */}
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-xs border border-white/15 text-xs font-semibold text-amber-300 mb-6">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-            <span>e-Governance Portal • City of Las Piñas, Metro Manila</span>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+            {/* Left Hero Text */}
+            <div className="max-w-2xl space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-xs border border-white/15 text-xs font-semibold text-amber-300">
+                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                <span>e-Governance Portal • City of Las Piñas, Metro Manila</span>
+              </div>
 
-          {/* Headline */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight text-white max-w-3xl mx-auto">
-            Serbisyong Tapat at Maasahan para sa Bawat Mamamayan.
-          </h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight text-white">
+                Serbisyong Tapat at Maasahan para sa Bawat Mamamayan.
+              </h1>
 
-          {/* Subtitle */}
-          <p className="mt-5 text-sm sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto">
-            Welcome to the digital frontline of Barangay Pamplona Uno, Las Piñas City. Request official clearances, submit community sumbong reports, and access 24/7 public services online.
-          </p>
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                Welcome to the digital frontline of Barangay Pamplona Uno, Las Piñas City. Request official barangay clearances, submit community sumbong reports, monitor local disaster alerts, and access emergency hotlines anytime.
+              </p>
 
-          {/* Primary Action Buttons (Restrained 2-Color Hierarchy) */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-md mx-auto">
-            {/* Primary Action: Solid Amber Accent */}
-            <Link
-              href="/services"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm shadow-md transition-all active:scale-95 group"
-            >
-              <FileText className="h-4 w-4 text-slate-950" />
-              <span>Request Document</span>
-              <ArrowRight className="h-4 w-4 ml-0.5 transition-transform group-hover:translate-x-1" />
-            </Link>
+              {/* Quick Document Track Input Strip */}
+              <div className="pt-2">
+                <form
+                  action="/services/track"
+                  method="GET"
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 max-w-lg bg-white/10 p-1.5 rounded-xl backdrop-blur-md border border-white/20"
+                >
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      name="code"
+                      placeholder="Enter Tracking Code (e.g. DOC-2026-X8K9M)"
+                      className="w-full bg-white text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm pl-9 pr-3 py-2.5 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-amber-400"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-4 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-sm shrink-0 flex items-center justify-center gap-1.5 active:scale-95"
+                  >
+                    <span>Track Status</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </form>
+                <p className="text-[11px] text-slate-400 mt-2">
+                  Need an urgent document? Online applications processed within 30 minutes.
+                </p>
+              </div>
+            </div>
 
-            {/* Secondary Action: Clean Ghost / Outline Button */}
-            <Link
-              href="/reports/new"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-white/25 hover:bg-white/10 text-white font-bold text-sm backdrop-blur-xs transition-colors active:scale-95 group"
-            >
-              <AlertCircle className="h-4 w-4 text-amber-300" />
-              <span>Report Concern</span>
-              <ArrowRight className="h-4 w-4 ml-0.5 transition-transform group-hover:translate-x-1 text-slate-300 group-hover:text-white" />
-            </Link>
-          </div>
-
-          {/* Secondary Lookup Link (Separating Action from Lookup) */}
-          <div className="mt-5">
-            <Link
-              href="/services/track"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-slate-300 hover:text-white transition-colors underline-offset-4 hover:underline font-medium"
-            >
-              <span>Already submitted an application? Check status</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            {/* Right Seal & Local Highlights Card */}
+            <div className="hidden lg:flex flex-col items-center justify-center p-8 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md max-w-sm text-center">
+              <BarangaySeal size={96} className="mb-4 drop-shadow-lg" />
+              <h2 className="font-bold text-lg text-white">Barangay Pamplona Uno</h2>
+              <p className="text-xs text-blue-200 mt-1">
+                Lungsod ng Las Piñas • Kalakhang Maynila (NCR)
+              </p>
+              <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 gap-4 w-full text-left">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
+                    Total Puroks
+                  </span>
+                  <span className="text-base font-extrabold text-white">7 Puroks</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
+                    Tanod Response
+                  </span>
+                  <span className="text-base font-extrabold text-emerald-400">&lt; 10 Mins</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* 2. Quick Status Cards Section (Interactive & Baseline-Aligned) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-14 relative z-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 sm:-mt-12 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Status Card 1: Disaster Preparedness Level (Dual PAGASA Axes: Rainfall + Wind) */}
           <Link
