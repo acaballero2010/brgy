@@ -140,7 +140,7 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
           {/* Economic & Livelihood Services Section */}
           <div className="pt-3">
             <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 mb-2 px-2 flex items-center justify-between">
-              <span>Talipapa, Gigs & TODA</span>
+              <span>Community Hub (Market, Jobs & TODA)</span>
               <span className="text-[10px] text-amber-700 bg-amber-100 font-bold px-1.5 py-0.2 rounded-full">Active</span>
             </p>
             {economyLinks.map((item) => {

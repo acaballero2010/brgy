@@ -218,10 +218,10 @@ export default function HomePage() {
               Barangay Community Platform
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Quick Community Services
+              Community Hub & Public Interaction
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              One-stop access to barangay clearances, commuter dispatch, neighborhood marketplace, and community resources.
+              Citizen-led services: commuter dispatch, neighborhood marketplace, local jobs, and public assistance.
             </p>
           </div>
 

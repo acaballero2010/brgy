@@ -154,8 +154,7 @@ export default function Navbar() {
                   }`}
                   aria-expanded={isCommunityOpen}
                 >
-                  <span className="hidden xl:inline">Community & Services</span>
-                  <span className="xl:hidden">Community</span>
+                  <span>Community Hub</span>
                   <ChevronDown
                     className={`h-3.5 w-3.5 transition-transform duration-200 ${
                       isCommunityOpen ? "rotate-180 text-blue-900" : "text-slate-400"
@@ -169,7 +168,7 @@ export default function Navbar() {
                     className="absolute left-0 mt-1.5 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
                   >
                     <div className="px-3 py-1.5 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Community & Hyperlocal Economy
+                      Community Hub & Citizen Services
                     </div>
                     <div className="space-y-1 mt-1">
                       {communityItems.map((item) => {
