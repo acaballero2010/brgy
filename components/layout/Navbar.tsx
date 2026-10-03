@@ -13,12 +13,16 @@ import {
   ShoppingBag,
   Briefcase,
   AlertCircle,
-  PhoneCall
+  PhoneCall,
+  User,
+  LogIn
 } from "lucide-react";
 import BarangaySeal from "@/components/common/BarangaySeal";
 import MobileDrawer from "./MobileDrawer";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
+  const { profile } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
   const communityRef = useRef<HTMLDivElement>(null);
@@ -215,6 +219,41 @@ export default function Navbar() {
                 <span className="hidden xl:inline">Track Request</span>
                 <span className="xl:hidden">Track</span>
               </Link>
+
+              {/* Resident Profile / Registration CTA */}
+              {profile ? (
+                <Link
+                  href="/profile"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 xl:px-3 xl:py-2 text-xs font-bold rounded-xl bg-blue-50 text-blue-900 border border-blue-200 hover:bg-blue-100 transition-colors shadow-2xs whitespace-nowrap shrink-0"
+                  title="View Resident Profile & Digital ID"
+                >
+                  <div className="h-4 w-4 rounded-full bg-blue-900 text-white flex items-center justify-center text-[9px] font-black">
+                    {profile.firstName[0]}
+                  </div>
+                  <span className="hidden xl:inline">{profile.firstName}</span>
+                  <span className="xl:hidden">Profile</span>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/register"
+                    className="hidden md:inline-flex items-center gap-1 px-2.5 py-1.5 xl:px-3 xl:py-2 text-xs font-bold rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 transition-colors shadow-2xs whitespace-nowrap shrink-0"
+                    title="Register Resident Account"
+                  >
+                    <User className="h-3.5 w-3.5 text-slate-950 shrink-0" />
+                    <span>Register</span>
+                  </Link>
+
+                  <Link
+                    href="/login"
+                    className="hidden xl:inline-flex items-center gap-1 px-2 py-1.5 text-xs font-semibold text-slate-600 hover:text-blue-900 hover:bg-slate-100 rounded-xl transition-colors whitespace-nowrap shrink-0"
+                    title="Resident Sign In"
+                  >
+                    <LogIn className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                    <span>Sign In</span>
+                  </Link>
+                </>
+              )}
 
               {/* Primary Emergency Dialer */}
               <a

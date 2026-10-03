@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import BarangaySeal from "@/components/common/BarangaySeal";
 import { EMERGENCY_CONTACTS, TODAY_OPERATING_STATUS } from "@/lib/data";
+import { useAuth } from "@/context/AuthContext";
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ interface MobileDrawerProps {
 
 export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   const pathname = usePathname();
+  const { profile } = useAuth();
 
   // Prevent background body scroll when drawer is open
   useEffect(() => {
@@ -90,6 +92,45 @@ export default function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
             <X className="h-5 w-5" />
           </button>
         </div>
+
+        {/* Resident Account Banner */}
+        {profile ? (
+          <div className="bg-blue-50 border-b border-blue-100 p-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-full bg-blue-900 text-white flex items-center justify-center text-xs font-black shrink-0">
+                {profile.firstName[0]}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 truncate">{profile.fullName}</p>
+                <p className="text-[10px] text-blue-700 font-medium">{profile.purok} • {profile.barangayIdNumber}</p>
+              </div>
+            </div>
+            <Link
+              href="/profile"
+              onClick={onClose}
+              className="text-[11px] font-bold text-blue-900 bg-white border border-blue-200 px-2.5 py-1 rounded-md shrink-0 shadow-2xs"
+            >
+              My ID
+            </Link>
+          </div>
+        ) : (
+          <div className="bg-slate-100 border-b border-slate-200 p-2.5 flex items-center justify-between gap-2">
+            <Link
+              href="/register"
+              onClick={onClose}
+              className="flex-1 py-1.5 px-3 rounded-lg bg-amber-400 text-slate-950 font-bold text-xs text-center shadow-xs"
+            >
+              Register
+            </Link>
+            <Link
+              href="/login"
+              onClick={onClose}
+              className="flex-1 py-1.5 px-3 rounded-lg bg-white border border-slate-300 text-slate-800 font-bold text-xs text-center shadow-2xs"
+            >
+              Sign In
+            </Link>
+          </div>
+        )}
 
         {/* Operating Status Pill */}
         <div className="bg-emerald-50 border-b border-emerald-100 px-4 py-2 text-xs flex items-center justify-between text-emerald-900">

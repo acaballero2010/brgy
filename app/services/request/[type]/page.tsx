@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -30,6 +30,7 @@ import {
   StoredDocumentRequest
 } from "@/lib/document-store";
 import { submitDocumentRequest } from "@/app/actions/portal-actions";
+import { useAuth } from "@/context/AuthContext";
 
 // Form validation schema using Zod
 const requestFormSchema = z.object({
@@ -93,6 +94,17 @@ export default function DocumentRequestWizard() {
     },
     mode: "onTouched",
   });
+
+  const { profile } = useAuth();
+
+  useEffect(() => {
+    if (profile) {
+      setValue("fullName", profile.fullName);
+      setValue("streetAddress", profile.streetAddress);
+      setValue("mobileNumber", profile.mobileNumber.replace(/[^0-9]/g, ""));
+      setValue("yearsOfResidency", profile.yearsOfResidency);
+    }
+  }, [profile, setValue]);
 
   const formData = watch();
 
