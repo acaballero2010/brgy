@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import {
   WifiOff,
   PhoneCall,
@@ -10,67 +10,76 @@ import {
 import { getOfflineSnapshot, saveOfflineSnapshot } from "@/lib/offline-cache";
 import { OfflineCacheSnapshot } from "@/types/portal";
 
+function subscribeOnline(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
+function getOnlineStatus() {
+  return typeof navigator !== "undefined" ? navigator.onLine : true;
+}
+
+function getServerOnlineStatus() {
+  return true;
+}
+
 export default function OfflineCacheSync() {
-  const [isOffline, setIsOffline] = useState(() => (typeof navigator !== "undefined" ? !navigator.onLine : false));
+  const isOnline = useSyncExternalStore(subscribeOnline, getOnlineStatus, getServerOnlineStatus);
+  const isOffline = !isOnline;
+  const [isDismissed, setIsDismissed] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
   const [snapshot, setSnapshot] = useState<OfflineCacheSnapshot | null>(() => getOfflineSnapshot());
 
-  useEffect(() => {
-    // Set online/offline listeners
-    if (typeof window !== "undefined") {
-      const handleOnline = () => {
-        setIsOffline(false);
-        // Refresh cache on reconnect
-        const updated = saveOfflineSnapshot();
-        setSnapshot(updated);
-      };
+  const handleOpenDrawer = () => {
+    setSnapshot(getOfflineSnapshot() || saveOfflineSnapshot());
+    setShowDrawer(true);
+  };
 
-      const handleOffline = () => {
-        setIsOffline(true);
-        const cached = getOfflineSnapshot();
-        setSnapshot(cached);
-      };
-
-      window.addEventListener("online", handleOnline);
-      window.addEventListener("offline", handleOffline);
-
-      return () => {
-        window.removeEventListener("online", handleOnline);
-        window.removeEventListener("offline", handleOffline);
-      };
-    }
-  }, []);
-
-  if (!isOffline && !showDrawer) {
+  if ((!isOffline || isDismissed) && !showDrawer) {
     return null;
   }
 
   return (
     <>
       {/* Offline Alert Strip when disconnected */}
-      {isOffline && (
+      {isOffline && !isDismissed && (
         <div
           role="status"
           aria-live="polite"
-          className="sticky top-0 z-50 bg-slate-900 text-amber-300 border-b border-amber-500/40 px-3 py-2 text-xs shadow-md transition-all animate-in slide-in-from-top-2"
+          className="sticky top-0 z-50 bg-slate-900 text-amber-300 border-b border-amber-500/40 px-3 py-1.5 sm:py-2 text-xs shadow-md transition-all animate-in slide-in-from-top-2"
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/20 text-amber-400 shrink-0 animate-pulse">
                 <WifiOff className="h-3 w-3" />
               </span>
-              <p className="font-semibold text-slate-100">
+              <p className="font-semibold text-slate-100 truncate text-[11px] sm:text-xs">
                 Offline Mode: Network disconnected. Showing 10 cached bulletins & emergency hotlines.
               </p>
             </div>
 
-            <button
-              onClick={() => setShowDrawer(true)}
-              className="px-2.5 py-1 rounded bg-amber-400 text-slate-950 font-bold hover:bg-amber-300 transition-colors shrink-0 text-[11px] flex items-center gap-1"
-            >
-              <PhoneCall className="h-3 w-3" />
-              <span>Offline Hotlines</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={handleOpenDrawer}
+                className="px-2.5 py-1 rounded bg-amber-400 text-slate-950 font-bold hover:bg-amber-300 transition-colors text-[11px] flex items-center gap-1 cursor-pointer"
+              >
+                <PhoneCall className="h-3 w-3" />
+                <span>Offline Hotlines</span>
+              </button>
+
+              <button
+                onClick={() => setIsDismissed(true)}
+                className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                aria-label="Dismiss offline banner"
+                title="Dismiss banner"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       )}

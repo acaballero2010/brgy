@@ -84,35 +84,35 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-shadow duration-200 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
+          <div className="flex items-center justify-between h-16 sm:h-20 gap-3 xl:gap-4">
             {/* Left: Clean Official Seal & Portal Identity */}
             <Link
               href="/"
-              className="flex items-center gap-3.5 group focus:outline-hidden focus:ring-2 focus:ring-blue-600 rounded-xl p-1 -ml-1 transition-opacity hover:opacity-95"
+              className="flex items-center gap-2.5 sm:gap-3 group focus:outline-hidden focus:ring-2 focus:ring-blue-600 rounded-xl p-1 -ml-1 transition-opacity hover:opacity-95 shrink-0"
             >
-              <BarangaySeal size={48} className="shadow-xs shrink-0" />
+              <BarangaySeal size={44} className="shadow-xs shrink-0" />
               <div className="flex flex-col justify-center">
-                <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight group-hover:text-blue-900 transition-colors">
+                <span className="text-sm sm:text-base lg:text-lg font-black text-slate-900 tracking-tight leading-tight group-hover:text-blue-900 transition-colors whitespace-nowrap">
                   Barangay Pamplona Uno
                 </span>
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5 whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Hall Open
                   </span>
                   <span className="text-slate-300">•</span>
-                  <span className="text-[11px] text-slate-600 font-medium">Closes 5:00 PM</span>
-                  <span className="hidden md:inline text-slate-300">•</span>
-                  <span className="hidden md:inline text-[11px] text-slate-400">Las Piñas City</span>
+                  <span className="text-slate-600 font-medium">Closes 5:00 PM</span>
+                  <span className="hidden 2xl:inline text-slate-300">•</span>
+                  <span className="hidden 2xl:inline text-slate-400">Las Piñas City</span>
                 </div>
               </div>
             </Link>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1 shrink-0">
               <Link
                 href="/"
-                className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                className={`px-3 py-1.5 xl:py-2 rounded-xl text-xs xl:text-sm font-semibold transition-all whitespace-nowrap ${
                   pathname === "/"
                     ? "bg-blue-900 text-white shadow-xs"
                     : "text-slate-700 hover:text-blue-900 hover:bg-slate-100"
@@ -122,7 +122,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/services"
-                className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                className={`px-3 py-1.5 xl:py-2 rounded-xl text-xs xl:text-sm font-semibold transition-all whitespace-nowrap ${
                   pathname === "/services" || (pathname.startsWith("/services") && !pathname.startsWith("/services/toda") && !pathname.startsWith("/services/track"))
                     ? "bg-blue-900 text-white shadow-xs"
                     : "text-slate-700 hover:text-blue-900 hover:bg-slate-100"
@@ -132,7 +132,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/news"
-                className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                className={`px-3 py-1.5 xl:py-2 rounded-xl text-xs xl:text-sm font-semibold transition-all whitespace-nowrap ${
                   pathname.startsWith("/news")
                     ? "bg-blue-900 text-white shadow-xs"
                     : "text-slate-700 hover:text-blue-900 hover:bg-slate-100"
@@ -147,16 +147,17 @@ export default function Navbar() {
                   type="button"
                   onClick={() => setIsCommunityOpen(!isCommunityOpen)}
                   onMouseEnter={() => setIsCommunityOpen(true)}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 xl:py-2 rounded-xl text-xs xl:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
                     isCommunityActive || isCommunityOpen
                       ? "bg-blue-50 text-blue-900 font-bold"
                       : "text-slate-700 hover:text-blue-900 hover:bg-slate-100"
                   }`}
                   aria-expanded={isCommunityOpen}
                 >
-                  <span>Community & Services</span>
+                  <span className="hidden xl:inline">Community & Services</span>
+                  <span className="xl:hidden">Community</span>
                   <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${
+                    className={`h-3.5 w-3.5 transition-transform duration-200 ${
                       isCommunityOpen ? "rotate-180 text-blue-900" : "text-slate-400"
                     }`}
                   />
@@ -204,43 +205,44 @@ export default function Navbar() {
             </nav>
 
             {/* Right Quick Actions */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {/* Track Document Button */}
               <Link
                 href="/services/track"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-2xs"
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 xl:px-3 xl:py-2 text-xs font-bold rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-2xs whitespace-nowrap shrink-0"
                 title="Track Request Status"
               >
-                <FileSearch className="h-3.5 w-3.5 text-blue-700" />
-                <span>Track Request</span>
+                <FileSearch className="h-3.5 w-3.5 text-blue-700 shrink-0" />
+                <span className="hidden xl:inline">Track Request</span>
+                <span className="xl:hidden">Track</span>
               </Link>
 
               {/* Primary Emergency Dialer */}
               <a
                 href="tel:09175558266"
-                className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-extrabold rounded-xl bg-red-600 text-white hover:bg-red-700 active:scale-95 transition-all shadow-xs"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 xl:px-3.5 xl:py-2 text-xs font-black rounded-xl bg-red-600 text-white hover:bg-red-700 active:scale-95 transition-all shadow-xs whitespace-nowrap shrink-0"
                 title="24/7 Tanod Patrol Emergency Hotline"
               >
                 <Phone className="h-3.5 w-3.5 fill-current animate-pulse shrink-0" />
-                <span className="hidden xl:inline">Emergency: Call Tanod (0917-555-8266)</span>
-                <span className="hidden sm:inline xl:hidden">Emergency: Call Tanod</span>
-                <span className="sm:hidden">Call Tanod</span>
+                <span className="hidden 2xl:inline">Emergency: 0917-555-8266</span>
+                <span className="hidden sm:inline 2xl:hidden">Tanod: 0917-555-8266</span>
+                <span className="sm:hidden">Tanod</span>
               </a>
 
               {/* Staff / Admin portal link */}
               <Link
                 href="/admin"
-                className="hidden md:inline-flex items-center gap-1 px-2.5 py-2 text-xs font-medium rounded-xl text-slate-600 hover:text-blue-900 hover:bg-blue-50 transition-colors"
+                className="hidden lg:inline-flex items-center gap-1 px-2 py-1.5 xl:px-2.5 xl:py-2 text-xs font-medium rounded-xl text-slate-600 hover:text-blue-900 hover:bg-blue-50 transition-colors whitespace-nowrap shrink-0"
                 title="Barangay Staff Access"
               >
-                <Shield className="h-3.5 w-3.5 text-slate-500" />
+                <Shield className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                 <span>Staff</span>
               </Link>
 
               {/* Mobile Drawer Trigger */}
               <button
                 onClick={() => setIsDrawerOpen(true)}
-                className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-hidden focus:ring-2 focus:ring-blue-600 shrink-0 cursor-pointer"
                 aria-label="Open mobile navigation"
               >
                 <Menu className="h-6 w-6" />
