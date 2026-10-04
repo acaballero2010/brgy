@@ -111,7 +111,7 @@ export default function HomePage() {
       </section>
 
       {/* 2. Quick Status Cards Section (Interactive & Baseline-Aligned) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 sm:-mt-12 relative z-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Status Card 1: Disaster Preparedness Level (Dual PAGASA Axes: Rainfall + Wind) */}
           <Link

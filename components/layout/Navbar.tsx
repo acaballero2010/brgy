@@ -7,7 +7,6 @@ import {
   Menu,
   Phone,
   Shield,
-  FileSearch,
   ChevronDown,
   Bike,
   ShoppingBag,
@@ -209,16 +208,6 @@ export default function Navbar() {
 
             {/* Right Quick Actions */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Track Document Button */}
-              <Link
-                href="/services/track"
-                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 xl:px-3 xl:py-2 text-xs font-bold rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-2xs whitespace-nowrap shrink-0"
-                title="Track Request Status"
-              >
-                <FileSearch className="h-3.5 w-3.5 text-blue-700 shrink-0" />
-                <span className="hidden xl:inline">Track Request</span>
-                <span className="xl:hidden">Track</span>
-              </Link>
 
               {/* Resident Profile / Registration CTA */}
               {profile ? (
@@ -267,15 +256,17 @@ export default function Navbar() {
                 <span className="sm:hidden">Tanod</span>
               </a>
 
-              {/* Staff / Admin portal link */}
-              <Link
-                href="/admin"
-                className="hidden lg:inline-flex items-center gap-1 px-2 py-1.5 xl:px-2.5 xl:py-2 text-xs font-medium rounded-xl text-slate-600 hover:text-blue-900 hover:bg-blue-50 transition-colors whitespace-nowrap shrink-0"
-                title="Barangay Staff Access"
-              >
-                <Shield className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                <span>Staff</span>
-              </Link>
+              {/* Staff / Admin portal link (only visible when not logged in as resident) */}
+              {!profile && (
+                <Link
+                  href="/admin"
+                  className="hidden lg:inline-flex items-center gap-1 px-2 py-1.5 xl:px-2.5 xl:py-2 text-xs font-medium rounded-xl text-slate-600 hover:text-blue-900 hover:bg-blue-50 transition-colors whitespace-nowrap shrink-0"
+                  title="Barangay Staff Access"
+                >
+                  <Shield className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                  <span>Staff</span>
+                </Link>
+              )}
 
               {/* Mobile Drawer Trigger */}
               <button
