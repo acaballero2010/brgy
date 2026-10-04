@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -20,8 +20,15 @@ import BarangaySeal from "@/components/common/BarangaySeal";
 import MobileDrawer from "./MobileDrawer";
 import { useAuth } from "@/context/AuthContext";
 
+const emptySubscribe = () => () => {};
+
 export default function Navbar() {
   const { profile } = useAuth();
+  const isClient = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
   const communityRef = useRef<HTMLDivElement>(null);
@@ -210,7 +217,7 @@ export default function Navbar() {
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
 
               {/* Resident Profile / Registration CTA */}
-              {profile ? (
+              {isClient && profile ? (
                 <Link
                   href="/profile"
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 xl:px-3 xl:py-2 text-xs font-bold rounded-xl bg-blue-50 text-blue-900 border border-blue-200 hover:bg-blue-100 transition-colors shadow-2xs whitespace-nowrap shrink-0"
@@ -222,7 +229,7 @@ export default function Navbar() {
                   <span className="hidden xl:inline">{profile.firstName}</span>
                   <span className="xl:hidden">Profile</span>
                 </Link>
-              ) : (
+              ) : isClient ? (
                 <>
                   <Link
                     href="/register"
@@ -242,7 +249,7 @@ export default function Navbar() {
                     <span>Sign In</span>
                   </Link>
                 </>
-              )}
+              ) : null}
 
               {/* Primary Emergency Dialer */}
               <a
@@ -257,7 +264,7 @@ export default function Navbar() {
               </a>
 
               {/* Staff / Admin portal link (only visible when not logged in as resident) */}
-              {!profile && (
+              {isClient && !profile && (
                 <Link
                   href="/admin"
                   className="hidden lg:inline-flex items-center gap-1 px-2 py-1.5 xl:px-2.5 xl:py-2 text-xs font-medium rounded-xl text-slate-600 hover:text-blue-900 hover:bg-blue-50 transition-colors whitespace-nowrap shrink-0"
