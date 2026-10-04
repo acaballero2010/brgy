@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Briefcase,
   Search,
@@ -10,25 +10,63 @@ import {
   MessageSquare,
   PlusCircle,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles,
+  Loader2,
+  ShieldCheck,
+  UserCheck
 } from "lucide-react";
+import Link from "next/link";
 import { MOCK_JOBS } from "@/lib/economy-data";
-import { GigType } from "@/types/economy";
+import { GigType, JobPosting } from "@/types/economy";
+import { useAuth } from "@/context/AuthContext";
+import { getJobPostings, createJobPosting, seedJobsIfEmpty } from "@/lib/firebase/jobs";
 
 export default function JobsPage() {
+  const { profile } = useAuth();
+  const [jobs, setJobs] = useState<JobPosting[]>(MOCK_JOBS);
   const [selectedGigType, setSelectedGigType] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [showPostModal, setShowPostModal] = useState(false);
   const [postSuccess, setPostSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // New Job Form State
   const [newTitle, setNewTitle] = useState("");
+  const [newGigType, setNewGigType] = useState<GigType>("ONE_TIME");
+  const [newRateType, setNewRateType] = useState<"PER_PROJECT" | "PER_DAY" | "PER_HOUR">("PER_PROJECT");
   const [newRate, setNewRate] = useState("");
   const [newPurok, setNewPurok] = useState("Purok 1 (Riverside)");
+  const [newLandmark, setNewLandmark] = useState("");
+  const [newEmployerName, setNewEmployerName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newSkills, setNewSkills] = useState("");
   const [newDesc, setNewDesc] = useState("");
 
-  const filteredJobs = MOCK_JOBS.filter((job) => {
+  // Load jobs from Firestore on mount
+  useEffect(() => {
+    let isMounted = true;
+    seedJobsIfEmpty();
+    getJobPostings().then((liveJobs) => {
+      if (isMounted && liveJobs.length > 0) {
+        setJobs(liveJobs);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleOpenPostModal = () => {
+    if (profile) {
+      if (!newEmployerName) setNewEmployerName(profile.fullName);
+      if (!newPhone) setNewPhone(profile.mobileNumber);
+      if (profile.purok) setNewPurok(`${profile.purok}`);
+    }
+    setShowPostModal(true);
+  };
+
+  const filteredJobs = jobs.filter((job) => {
     const matchesGig = selectedGigType === "ALL" || job.gigType === selectedGigType;
     const q = searchQuery.toLowerCase().trim();
     const matchesQuery =
@@ -36,6 +74,7 @@ export default function JobsPage() {
       job.title.toLowerCase().includes(q) ||
       job.description.toLowerCase().includes(q) ||
       job.purok.toLowerCase().includes(q) ||
+      job.employerName.toLowerCase().includes(q) ||
       job.requiredSkills.some((s) => s.toLowerCase().includes(q));
 
     return matchesGig && matchesQuery;
@@ -43,32 +82,49 @@ export default function JobsPage() {
 
   const handlePostGig = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
+    const skillsArray = newSkills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const parsedRate = Number(newRate) || 500;
+
     try {
-      const { postLocalJob } = await import("@/app/actions/economy-actions");
-      await postLocalJob({
-        employerName: "Resident Employer",
-        title: newTitle,
-        description: newDesc || "Contact employer for gig details.",
-        gigType: (selectedGigType === "ALL" ? "ONE_TIME" : selectedGigType) as GigType,
-        rateType: "PER_PROJECT",
-        rateAmount: Number(newRate) || 500,
+      const created = await createJobPosting({
+        employerId: profile?.uid || "usr-anon",
+        employerName: newEmployerName.trim() || profile?.fullName || "Resident Employer",
+        title: newTitle.trim(),
+        description: newDesc.trim() || "Contact employer for gig details.",
+        gigType: newGigType,
+        rateType: newRateType,
+        rateAmount: parsedRate,
         purok: newPurok,
-        landmark: "Purok Area",
+        landmark: newLandmark.trim() || newPurok,
         contactMode: "PHONE_CALL",
-        contactNumber: newPhone || "0917-000-0000",
-        requiredSkills: ["Reliable", "Barangay Resident"],
+        contactNumber: newPhone.trim() || "0917-000-0000",
+        requiredSkills: skillsArray.length > 0 ? skillsArray : ["Barangay Resident", "Reliable"],
+        expiresAt: "In 7 days",
       });
+
+      setJobs((prev) => [created, ...prev]);
       setPostSuccess(true);
     } catch (err) {
       console.error("Job post error:", err);
       setPostSuccess(true);
+    } finally {
+      setIsSubmitting(false);
     }
+
     setTimeout(() => {
       setPostSuccess(false);
       setShowPostModal(false);
       setNewTitle("");
       setNewRate("");
       setNewDesc("");
+      setNewSkills("");
+      setNewLandmark("");
     }, 2000);
   };
 
@@ -86,18 +142,25 @@ export default function JobsPage() {
               Community Job & Gig Board
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Find and post local informal work, handyman gigs, part-time jobs, and seasonal work within Pamplona Uno. No commissions, direct neighborhood hiring.
+              Find and post local informal work, handyman gigs, part-time jobs, and seasonal work within Pamplona Uno. No middleman cuts, 100% direct neighborhood hiring.
             </p>
           </div>
 
-          <div className="shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <button
-              onClick={() => setShowPostModal(true)}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs sm:text-sm shadow-xs transition-transform active:scale-95 flex items-center justify-center gap-2"
+              onClick={handleOpenPostModal}
+              className="px-4 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs shadow-xs transition-transform active:scale-95 flex items-center gap-1.5"
             >
               <PlusCircle className="h-4 w-4" />
               <span>Post a Gig / Job Opening</span>
             </button>
+            <Link
+              href="/marketplace"
+              className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-transform active:scale-95 flex items-center gap-1.5"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Talipapa</span>
+            </Link>
           </div>
         </div>
 
@@ -168,7 +231,7 @@ export default function JobsPage() {
                 </h2>
 
                 <div className="mt-2.5 flex items-baseline gap-1 text-blue-950">
-                  <span className="text-xl font-black font-mono">₱{job.rateAmount}.00</span>
+                  <span className="text-xl font-black font-mono">₱{job.rateAmount.toLocaleString()}.00</span>
                   <span className="text-xs text-slate-500 font-semibold">
                     /{job.rateType.replace("PER_", "").toLowerCase()}
                   </span>
@@ -211,7 +274,7 @@ export default function JobsPage() {
                   </a>
 
                   <a
-                    href={`sms:${job.contactNumber}?body=Magandang araw po! Mag-aapply po ako sa inyong gig sa Barangay Pamplona Uno portal: ${job.title}`}
+                    href={`sms:${job.contactNumber}?body=Magandang araw po! Mag-aapply po ako sa inyong gig sa Barangay Pamplona Uno portal: ${encodeURIComponent(job.title)}`}
                     className="py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
@@ -244,6 +307,22 @@ export default function JobsPage() {
                 </button>
               </div>
 
+              {profile ? (
+                <div className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900">
+                  <UserCheck className="h-4 w-4 text-blue-700 shrink-0" />
+                  <span>
+                    Posting as verified resident: <strong>{profile.fullName}</strong> ({profile.purok})
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                  <ShieldCheck className="h-4 w-4 text-amber-700 shrink-0" />
+                  <span>
+                    <Link href="/login" className="underline font-bold">Sign in</Link> to attach your verified resident badge to this job post.
+                  </span>
+                </div>
+              )}
+
               {postSuccess ? (
                 <div className="py-8 text-center space-y-2 animate-in zoom-in-95">
                   <div className="h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">
@@ -251,7 +330,7 @@ export default function JobsPage() {
                   </div>
                   <h4 className="font-bold text-slate-900 text-base">Job Successfully Posted!</h4>
                   <p className="text-xs text-slate-500">
-                    Your opening is now live for Pamplona Uno residents to apply.
+                    Your opening is now saved to Firestore and live for Pamplona Uno residents to apply.
                   </p>
                 </div>
               ) : (
@@ -266,8 +345,36 @@ export default function JobsPage() {
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
                       placeholder="e.g. Laundry Helper / Electrician for Ceiling Fan"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Gig Type *</label>
+                      <select
+                        value={newGigType}
+                        onChange={(e) => setNewGigType(e.target.value as GigType)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                      >
+                        <option value="ONE_TIME">One-Time Handyman / Task</option>
+                        <option value="PART_TIME">Part-Time Work</option>
+                        <option value="FULL_TIME">Full-Time Staff</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">Rate Basis *</label>
+                      <select
+                        value={newRateType}
+                        onChange={(e) => setNewRateType(e.target.value as "PER_PROJECT" | "PER_DAY" | "PER_HOUR")}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                      >
+                        <option value="PER_PROJECT">Per Project / Task</option>
+                        <option value="PER_DAY">Per Day (Arawan)</option>
+                        <option value="PER_HOUR">Per Hour</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -281,7 +388,7 @@ export default function JobsPage() {
                         value={newRate}
                         onChange={(e) => setNewRate(e.target.value)}
                         placeholder="e.g. 500"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
                       />
                     </div>
 
@@ -290,7 +397,7 @@ export default function JobsPage() {
                       <select
                         value={newPurok}
                         onChange={(e) => setNewPurok(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
                       >
                         <option value="Purok 1 (Riverside)">Purok 1 (Riverside)</option>
                         <option value="Purok 2 (Sampaguita)">Purok 2 (Sampaguita)</option>
@@ -303,17 +410,46 @@ export default function JobsPage() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        Employer / Business Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={newEmployerName}
+                        onChange={(e) => setNewEmployerName(e.target.value)}
+                        placeholder="e.g. Ate Mila / Homeowner"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        Contact Phone *
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={newPhone}
+                        onChange={(e) => setNewPhone(e.target.value)}
+                        placeholder="0917-000-0000"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block font-bold text-slate-700 mb-1">
-                      Contact Phone (for Applicants) *
+                      Required Skills (comma separated)
                     </label>
                     <input
-                      type="tel"
-                      required
-                      value={newPhone}
-                      onChange={(e) => setNewPhone(e.target.value)}
-                      placeholder="0917-000-0000"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono"
+                      type="text"
+                      value={newSkills}
+                      onChange={(e) => setNewSkills(e.target.value)}
+                      placeholder="e.g. Electrical Wiring, Circuit Breaker, Safety Certified"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
 
@@ -327,15 +463,23 @@ export default function JobsPage() {
                       value={newDesc}
                       onChange={(e) => setNewDesc(e.target.value)}
                       placeholder="Describe what needs to be done, schedule, and any required tools."
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-3 rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs shadow-xs transition-transform active:scale-95"
+                    disabled={isSubmitting}
+                    className="w-full py-3 rounded-xl bg-blue-900 hover:bg-blue-800 disabled:bg-blue-300 text-white font-bold text-xs shadow-xs transition-transform active:scale-95 flex items-center justify-center gap-2"
                   >
-                    Publish Job Listing
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Publishing to Firestore...</span>
+                      </>
+                    ) : (
+                      <span>Publish Job Listing</span>
+                    )}
                   </button>
                 </form>
               )}
