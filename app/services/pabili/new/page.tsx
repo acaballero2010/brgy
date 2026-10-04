@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   ShoppingBag,
@@ -8,18 +8,36 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
-  ArrowLeft
+  ArrowLeft,
+  UserCheck,
+  ShieldCheck,
+  Loader2,
+  PhoneCall
 } from "lucide-react";
-import { ErrandItem } from "@/types/economy";
+import { ErrandItem, Errand } from "@/types/economy";
+import { useAuth } from "@/context/AuthContext";
+import {
+  createFirestoreErrand,
+  subscribeToErrand
+} from "@/lib/firebase/errands";
 
 export default function NewPabiliErrandPage() {
+  const { profile } = useAuth();
+
   const [errandType, setErrandType] = useState<"PABILI" | "PADALA">("PABILI");
   const [storeName, setStoreName] = useState("Pamplona Uno Wet Market (Talipapa)");
   const [storePurok, setStorePurok] = useState("Purok 5 (Central)");
-  const [deliveryPurok, setDeliveryPurok] = useState("Purok 1 (Riverside)");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
+  const [customDeliveryPurok, setCustomDeliveryPurok] = useState<string | null>(null);
+  const [customDeliveryAddress, setCustomDeliveryAddress] = useState<string | null>(null);
+  const [customRequesterName, setCustomRequesterName] = useState<string | null>(null);
+  const [customContactPhone, setCustomContactPhone] = useState<string | null>(null);
   const [specialInstructions, setSpecialInstructions] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const requesterName = customRequesterName ?? (profile?.fullName || "");
+  const contactPhone = customContactPhone ?? (profile?.mobileNumber || "");
+  const deliveryPurok = customDeliveryPurok ?? (profile?.purok ? `${profile.purok}` : "Purok 1 (Riverside)");
+  const deliveryAddress = customDeliveryAddress ?? (profile?.streetAddress || "");
 
   // Dynamic Item List
   const [items, setItems] = useState<ErrandItem[]>([
@@ -27,7 +45,17 @@ export default function NewPabiliErrandPage() {
     { name: "Kangkong (2 tali)", quantity: "2 bundles", estimatedPrice: 30 },
   ]);
 
-  const [submittedCode, setSubmittedCode] = useState<string | null>(null);
+  const [submittedErrand, setSubmittedErrand] = useState<Errand | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  // Clean up subscription on unmount
+  useEffect(() => {
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
+    };
+  }, []);
 
   const addItemRow = () => {
     setItems([...items, { name: "", quantity: "1 pc", estimatedPrice: 50 }]);
@@ -53,24 +81,51 @@ export default function NewPabiliErrandPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
     try {
-      const { submitErrandRequest } = await import("@/app/actions/economy-actions");
-      const res = await submitErrandRequest({
-        requesterName: "Resident Customer",
-        requesterPhone: contactPhone || "0917-111-2233",
+      const createdErrand = await createFirestoreErrand({
+        requesterId: profile?.uid || "usr-anon",
+        requesterName: requesterName.trim() || profile?.fullName || "Resident Customer",
+        requesterPhone: contactPhone.trim() || profile?.mobileNumber || "0917-111-2233",
         errandType,
         storeName,
         storeLocationOrPurok: storePurok,
         deliveryPurok,
-        deliveryAddress: deliveryAddress || "Pamplona Uno Resident Address",
-        itemsList: items,
+        deliveryAddress: deliveryAddress || "Pamplona Uno Address",
+        itemsList: items.filter((item) => item.name.trim().length > 0),
         specialInstructions,
       });
-      setSubmittedCode(res.errand.trackingCode);
+
+      setSubmittedErrand(createdErrand);
+
+      // Listen to real-time status updates via Firestore onSnapshot
+      const unsub = subscribeToErrand(createdErrand.id, (updated: Errand) => {
+        setSubmittedErrand(updated);
+      });
+      unsubscribeRef.current = unsub;
+
+      // Simulated runner assignment after 4 seconds if testing single-screen
+      setTimeout(() => {
+        setSubmittedErrand((prev) => {
+          if (prev && prev.status === "REQUESTED") {
+            return {
+              ...prev,
+              status: "ASSIGNED",
+              runnerId: "run-001",
+              runnerName: "Kuya Jun (PUTODA Runner #12)",
+              runnerPhone: "0918-333-9900",
+              assignedAt: new Date().toISOString(),
+            };
+          }
+          return prev;
+        });
+      }, 4000);
+
     } catch (err) {
       console.error("Errand submit error:", err);
-      const code = `PABILI-2026-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      setSubmittedCode(code);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -96,26 +151,34 @@ export default function NewPabiliErrandPage() {
             Pabili at Padala Service
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            Have an accredited local runner or tricycle driver buy from the wet market, grocery, or pharmacy and deliver straight to your door.
+            Have an accredited local runner or TODA driver buy from the wet market, grocery, or pharmacy and deliver straight to your door.
           </p>
         </div>
 
         {/* Confirmation Screen */}
-        {submittedCode ? (
+        {submittedErrand ? (
           <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm text-center space-y-5 animate-in zoom-in-95">
             <div className="h-16 w-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">
               <CheckCircle2 className="h-9 w-9" />
             </div>
 
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
-                Runner Queued for Assignment
+              <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${
+                submittedErrand.status === "ASSIGNED" || submittedErrand.status === "OUT_FOR_DELIVERY"
+                  ? "bg-blue-100 text-blue-900"
+                  : "bg-emerald-50 text-emerald-700"
+              }`}>
+                {submittedErrand.status === "REQUESTED" && "Runner Queued for Assignment"}
+                {submittedErrand.status === "ASSIGNED" && "Runner Assigned to Order"}
+                {submittedErrand.status === "PURCHASING" && "Runner Purchasing Items"}
+                {submittedErrand.status === "OUT_FOR_DELIVERY" && "Out for Delivery"}
+                {submittedErrand.status === "DELIVERED" && "Delivered Successfully"}
               </span>
               <h2 className="text-2xl font-black text-slate-900 mt-2">
                 Pabili Request Confirmed!
               </h2>
               <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                Your order has been broadcasted to verified runners in {storePurok}.
+                Your order is synced with Firestore and broadcasted to verified runners in {storePurok}.
               </p>
             </div>
 
@@ -125,21 +188,48 @@ export default function NewPabiliErrandPage() {
                 <span className="text-amber-400 font-bold uppercase text-[10px]">
                   Order Reference
                 </span>
-                <span className="font-mono font-bold text-emerald-400">QUEUED</span>
+                <span className="font-mono font-bold text-emerald-400">
+                  {submittedErrand.status}
+                </span>
               </div>
-              <p className="font-mono text-2xl font-black text-white">{submittedCode}</p>
+              <p className="font-mono text-2xl font-black text-white">{submittedErrand.trackingCode}</p>
 
               <div className="pt-2 border-t border-slate-800 text-xs text-slate-300 space-y-1">
-                <p><strong>Store:</strong> {storeName}</p>
-                <p><strong>Items:</strong> {items.length} items listed</p>
-                <p><strong>Delivery Fee:</strong> ₱{serviceFee}.00</p>
+                <p><strong>Store:</strong> {submittedErrand.storeName}</p>
+                <p><strong>Items:</strong> {submittedErrand.itemsList.length} items listed</p>
+                <p><strong>Delivery Fee:</strong> ₱{submittedErrand.serviceFee}.00</p>
                 <p className="text-amber-200 text-xs font-bold pt-1">
-                  Est. Total to Prepare: ₱{totalEstimatedCost}.00 (Cash on Delivery)
+                  Est. Total to Prepare: ₱{submittedErrand.totalPayableAmount}.00 (Cash on Delivery)
                 </p>
               </div>
+
+              {submittedErrand.runnerName && (
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold">Assigned Runner</span>
+                    <p className="text-xs font-bold text-white">{submittedErrand.runnerName}</p>
+                  </div>
+                  {submittedErrand.runnerPhone && (
+                    <a
+                      href={`tel:${submittedErrand.runnerPhone}`}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1"
+                    >
+                      <PhoneCall className="h-3 w-3" />
+                      <span>Call</span>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSubmittedErrand(null)}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50"
+              >
+                Book Another Errand
+              </button>
               <Link
                 href="/services"
                 className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs shadow-xs"
@@ -154,6 +244,22 @@ export default function NewPabiliErrandPage() {
             onSubmit={handleSubmit}
             className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6"
           >
+            {profile ? (
+              <div className="flex items-center gap-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900">
+                <UserCheck className="h-4 w-4 text-emerald-700 shrink-0" />
+                <span>
+                  Booking as registered resident: <strong>{profile.fullName}</strong> ({profile.purok})
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
+                <ShieldCheck className="h-4 w-4 text-slate-400 shrink-0" />
+                <span>
+                  <Link href="/login" className="underline font-bold text-blue-900">Sign in</Link> to auto-fill delivery address and phone number.
+                </span>
+              </div>
+            )}
+
             {/* Errand Type Selector */}
             <div className="grid grid-cols-2 gap-3 p-1.5 rounded-2xl bg-slate-100">
               <button
@@ -183,8 +289,38 @@ export default function NewPabiliErrandPage() {
               </button>
             </div>
 
+            {/* Requester Contact */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Requester Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={requesterName}
+                  onChange={(e) => setCustomRequesterName(e.target.value)}
+                  placeholder="e.g. Maria Santos"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Contact Mobile Number *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={contactPhone}
+                  onChange={(e) => setCustomContactPhone(e.target.value)}
+                  placeholder="0917-123-4567"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm font-mono text-slate-900"
+                />
+              </div>
+            </div>
+
             {/* Store Information */}
-            <div className="space-y-4">
+            <div className="space-y-4 pt-2 border-t border-slate-100">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Store / Market Name *
@@ -195,7 +331,7 @@ export default function NewPabiliErrandPage() {
                   value={storeName}
                   onChange={(e) => setStoreName(e.target.value)}
                   placeholder="e.g. Pamplona Wet Market, Mercury Drug, Southstar, 7-Eleven"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900"
                 />
               </div>
 
@@ -206,12 +342,15 @@ export default function NewPabiliErrandPage() {
                 <select
                   value={storePurok}
                   onChange={(e) => setStorePurok(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900 font-semibold"
                 >
                   <option value="Purok 5 (Central)">Purok 5 (Central Market / Talipapa)</option>
                   <option value="Purok 1 (Riverside)">Purok 1 (Riverside)</option>
                   <option value="Purok 6 (Highway)">Purok 6 (National Highway / Commercial)</option>
                   <option value="Purok 2 (Sampaguita)">Purok 2 (Sampaguita)</option>
+                  <option value="Purok 3 (Ilang-Ilang)">Purok 3 (Ilang-Ilang)</option>
+                  <option value="Purok 4 (Mabuhay)">Purok 4 (Mabuhay)</option>
+                  <option value="Purok 7 (Greenhills)">Purok 7 (Greenhills)</option>
                 </select>
               </div>
             </div>
@@ -249,14 +388,14 @@ export default function NewPabiliErrandPage() {
                       placeholder="Item name / brand"
                       value={item.name}
                       onChange={(e) => updateItem(idx, "name", e.target.value)}
-                      className="flex-3 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs"
+                      className="flex-3 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-900"
                     />
                     <input
                       type="text"
                       placeholder="Qty (e.g. 1 kg)"
                       value={item.quantity}
                       onChange={(e) => updateItem(idx, "quantity", e.target.value)}
-                      className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-center"
+                      className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-center text-slate-900"
                     />
                     <div className="relative flex-1">
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">
@@ -269,7 +408,7 @@ export default function NewPabiliErrandPage() {
                         onChange={(e) =>
                           updateItem(idx, "estimatedPrice", parseFloat(e.target.value) || 0)
                         }
-                        className="w-full pl-5 pr-2 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-right font-mono"
+                        className="w-full pl-5 pr-2 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-right font-mono text-slate-900"
                       />
                     </div>
                     {items.length > 1 && (
@@ -295,8 +434,8 @@ export default function NewPabiliErrandPage() {
                   </label>
                   <select
                     value={deliveryPurok}
-                    onChange={(e) => setDeliveryPurok(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm"
+                    onChange={(e) => setCustomDeliveryPurok(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900 font-semibold"
                   >
                     <option value="Purok 1 (Riverside)">Purok 1 (Riverside)</option>
                     <option value="Purok 2 (Sampaguita)">Purok 2 (Sampaguita)</option>
@@ -310,31 +449,17 @@ export default function NewPabiliErrandPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Contact Phone Number *
+                    Delivery Address / Street *
                   </label>
                   <input
-                    type="tel"
+                    type="text"
                     required
-                    value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
-                    placeholder="0917-123-4567"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm font-mono"
+                    value={deliveryAddress}
+                    onChange={(e) => setCustomDeliveryAddress(e.target.value)}
+                    placeholder="Block and Lot number, street name, color of gate"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Delivery Address / Landmark *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  placeholder="Block and Lot number, street name, color of gate"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm"
-                />
               </div>
 
               <div>
@@ -346,7 +471,7 @@ export default function NewPabiliErrandPage() {
                   value={specialInstructions}
                   onChange={(e) => setSpecialInstructions(e.target.value)}
                   placeholder="e.g. Please bring official receipt, text before arriving at gate"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900"
                 />
               </div>
             </div>
@@ -374,11 +499,20 @@ export default function NewPabiliErrandPage() {
 
             <button
               type="submit"
-              disabled={!deliveryAddress || !contactPhone || items.length === 0}
+              disabled={isSubmitting || !deliveryAddress || !contactPhone || items.length === 0}
               className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm shadow-sm transition-transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <ShoppingBag className="h-4 w-4" />
-              <span>Book Pamplona Uno Runner (₱{totalEstimatedCost}.00 COD)</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Submitting to Pamplona Uno Runners...</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>Book Pamplona Uno Runner (₱{totalEstimatedCost}.00 COD)</span>
+                </>
+              )}
             </button>
           </form>
         )}

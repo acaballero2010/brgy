@@ -10,7 +10,13 @@ import {
   Coins,
   TrendingUp
 } from "lucide-react";
+import Link from "next/link";
 import { MOCK_PUTODA_DRIVERS } from "@/lib/economy-data";
+import {
+  subscribeToIncomingRides,
+  acceptRideInFirestore,
+  updateRideStatusInFirestore
+} from "@/lib/firebase/toda";
 
 export default function TodaDriverConsolePage() {
   const driver = MOCK_PUTODA_DRIVERS[0]; // Danny Ramos, T-042
@@ -27,8 +33,8 @@ export default function TodaDriverConsolePage() {
   const [dailyEarnings, setDailyEarnings] = useState(480);
   const [dailyTrips, setDailyTrips] = useState(12);
 
-  // Incoming simulated passenger request
-  const incomingPassenger = {
+  // Incoming passenger request
+  const [incomingPassenger, setIncomingPassenger] = useState({
     rideId: "RIDE-2026-X8K9",
     passengerName: "Maricar Mendoza",
     phone: "0917-444-8899",
@@ -36,7 +42,31 @@ export default function TodaDriverConsolePage() {
     dropoff: "Purok 5 (Central Market, Talipapa Gate 1)",
     fare: 40,
     distanceKm: 1.2,
-  };
+  });
+
+  // Listen to live Firestore rides when online
+  useEffect(() => {
+    if (!isOnline) return;
+
+    const unsub = subscribeToIncomingRides((rides) => {
+      if (rides.length > 0 && tripState === "IDLE") {
+        const topRide = rides[0];
+        setIncomingPassenger({
+          rideId: topRide.id,
+          passengerName: topRide.passengerName,
+          phone: topRide.passengerPhone,
+          pickup: `${topRide.pickupPurok}, ${topRide.pickupLandmark}`,
+          dropoff: `${topRide.dropoffPurok}, ${topRide.dropoffLandmark}`,
+          fare: topRide.fareAmount,
+          distanceKm: topRide.estimatedDistanceKm,
+        });
+        setCountdown(20);
+        setTripState("INCOMING_REQUEST");
+      }
+    });
+
+    return () => unsub();
+  }, [isOnline, tripState]);
 
   // Timer countdown for incoming ride
   useEffect(() => {
@@ -56,24 +86,36 @@ export default function TodaDriverConsolePage() {
   }, [tripState]);
 
   const handleSimulateIncoming = () => {
+    setIncomingPassenger({
+      rideId: `ride-sim-${Date.now()}`,
+      passengerName: "Maricar Mendoza",
+      phone: "0917-444-8899",
+      pickup: "Purok 1, Block 3 Lot 8, Riverside Lane",
+      dropoff: "Purok 5 (Central Market, Talipapa Gate 1)",
+      fare: 40,
+      distanceKm: 1.2,
+    });
     setCountdown(15);
     setTripState("INCOMING_REQUEST");
   };
 
-  const handleAcceptRide = () => {
-    // Simulated atomic DB lock
+  const handleAcceptRide = async () => {
+    await acceptRideInFirestore(incomingPassenger.rideId, driver);
     setTripState("ACCEPTED");
   };
 
-  const handleArrivedAtPickup = () => {
+  const handleArrivedAtPickup = async () => {
+    await updateRideStatusInFirestore(incomingPassenger.rideId, "ARRIVED_AT_PICKUP");
     setTripState("AT_PICKUP");
   };
 
-  const handleStartTrip = () => {
+  const handleStartTrip = async () => {
+    await updateRideStatusInFirestore(incomingPassenger.rideId, "IN_TRANSIT");
     setTripState("IN_TRANSIT");
   };
 
-  const handleCompleteTrip = () => {
+  const handleCompleteTrip = async () => {
+    await updateRideStatusInFirestore(incomingPassenger.rideId, "COMPLETED");
     setDailyEarnings((prev) => prev + incomingPassenger.fare);
     setDailyTrips((prev) => prev + 1);
     setTripState("COMPLETED");
@@ -98,8 +140,8 @@ export default function TodaDriverConsolePage() {
                 <span className="text-xs font-bold text-amber-400">
                   {driver.todaAssociation}
                 </span>
-                <span className="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.2 rounded font-semibold">
-                  Driver Console
+                <span className="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded font-semibold">
+                  Live Dispatch
                 </span>
               </div>
               <h1 className="text-lg sm:text-xl font-black text-white mt-0.5">
@@ -150,7 +192,7 @@ export default function TodaDriverConsolePage() {
         <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <span className="text-slate-400 font-semibold flex items-center gap-1.5">
             <Navigation className="h-4 w-4 text-blue-400" />
-            <span>Current Terminal:</span>
+            <span>Current Staging Terminal:</span>
           </span>
           <select
             value={currentTerminal}
@@ -175,19 +217,28 @@ export default function TodaDriverConsolePage() {
               </h2>
               <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
                 {isOnline
-                  ? `Staged at ${currentTerminal}. New pickup requests within this purok will alert your screen with a 15-second timer.`
+                  ? `Connected to Firestore Dispatch. Live passenger bookings submitted across Pamplona Uno will trigger this console in real time.`
                   : "Tap the power button at the top to go online and receive ride bookings."}
               </p>
             </div>
 
             {isOnline && (
-              <button
-                type="button"
-                onClick={handleSimulateIncoming}
-                className="px-4 py-2 rounded-xl bg-amber-400 text-slate-950 font-bold text-xs hover:bg-amber-300"
-              >
-                Simulate Incoming Ride Request
-              </button>
+              <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleSimulateIncoming}
+                  className="px-4 py-2 rounded-xl bg-amber-400 text-slate-950 font-bold text-xs hover:bg-amber-300"
+                >
+                  Simulate Demo Request
+                </button>
+                <Link
+                  href="/services/toda/book"
+                  target="_blank"
+                  className="px-4 py-2 rounded-xl bg-slate-700 text-slate-200 font-bold text-xs hover:bg-slate-600"
+                >
+                  Open Passenger Booking Tab ↗
+                </Link>
+              </div>
             )}
           </div>
         )}
@@ -205,7 +256,7 @@ export default function TodaDriverConsolePage() {
             <div>
               <h3 className="text-lg font-black">{incomingPassenger.passengerName}</h3>
               <p className="text-xs font-semibold text-slate-800">
-                Distance: ~{incomingPassenger.distanceKm} km
+                Estimated Distance: ~{incomingPassenger.distanceKm} km
               </p>
             </div>
 

@@ -1,30 +1,63 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Bike,
   PhoneCall,
   Star,
-  ArrowLeft
+  ArrowLeft,
+  UserCheck,
+  ShieldCheck,
+  CheckCircle2
 } from "lucide-react";
 import {
   MOCK_PUTODA_DRIVERS,
   calculateTodaFare
 } from "@/lib/economy-data";
-import { Driver, FareDiscountType } from "@/types/economy";
+import { Driver, FareDiscountType, Ride } from "@/types/economy";
+import { useAuth } from "@/context/AuthContext";
+import {
+  createFirestoreRide,
+  subscribeToRide
+} from "@/lib/firebase/toda";
 
 export default function TodaRideBookingPage() {
-  const [pickupPurok, setPickupPurok] = useState("Purok 1 (Riverside)");
+  const { profile } = useAuth();
+
+  const [customPickupPurok, setCustomPickupPurok] = useState<string | null>(null);
   const [pickupLandmark, setPickupLandmark] = useState("");
   const [dropoffPurok, setDropoffPurok] = useState("Purok 5 (Central Market)");
   const [dropoffLandmark, setDropoffLandmark] = useState("");
-  const [discountType, setDiscountType] = useState<FareDiscountType>("REGULAR");
+  const [customName, setCustomName] = useState<string | null>(null);
+  const [customPhone, setCustomPhone] = useState<string | null>(null);
+  const [customDiscountType, setCustomDiscountType] = useState<FareDiscountType | null>(null);
+
+  const passengerName = customName ?? (profile?.fullName || "");
+  const passengerPhone = customPhone ?? (profile?.mobileNumber || "");
+  const pickupPurok = customPickupPurok ?? (profile?.purok ? `${profile.purok}` : "Purok 1 (Riverside)");
+  const defaultDiscount: FareDiscountType = 
+    profile?.residentCategory === "Senior Citizen" ? "SENIOR_CITIZEN"
+    : profile?.residentCategory === "Person with Disability (PWD)" ? "PWD"
+    : profile?.residentCategory === "Youth / SK (15-30 yrs)" ? "STUDENT"
+    : "REGULAR";
+  const discountType = customDiscountType ?? defaultDiscount;
 
   // Booking state machine: 'FORM' | 'SEARCHING' | 'ACCEPTED' | 'IN_TRANSIT' | 'COMPLETED'
   const [bookingState, setBookingState] = useState<"FORM" | "SEARCHING" | "ACCEPTED" | "IN_TRANSIT" | "COMPLETED">("FORM");
   const [assignedDriver, setAssignedDriver] = useState<Driver | null>(null);
   const [trackingCode, setTrackingCode] = useState("");
+
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  // Clean up Firestore listener on unmount
+  useEffect(() => {
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
+    };
+  }, []);
 
   const fareDetails = calculateTodaFare(pickupPurok, dropoffPurok, discountType);
 
@@ -33,25 +66,43 @@ export default function TodaRideBookingPage() {
     setBookingState("SEARCHING");
 
     try {
-      const { bookTodaRide, acceptTodaRide } = await import("@/app/actions/economy-actions");
-      const bookRes = await bookTodaRide({
-        passengerName: "Resident Commuter",
-        passengerPhone: "0917-000-1122",
+      const ride = await createFirestoreRide({
+        passengerId: profile?.uid || "usr-commuter",
+        passengerName: passengerName.trim() || profile?.fullName || "Resident Commuter",
+        passengerPhone: passengerPhone.trim() || profile?.mobileNumber || "0917-000-1122",
         pickupPurok,
         pickupLandmark: pickupLandmark || "Near Purok Waiting Shed",
         dropoffPurok,
         dropoffLandmark: dropoffLandmark || "Purok Entrance Gate",
         discountType,
-        passengerCount: 1,
       });
 
-      // Dispatch delay simulating driver acceptance
-      setTimeout(async () => {
-        const acceptRes = await acceptTodaRide(bookRes.ride.id, "drv-001");
-        setAssignedDriver(acceptRes.ride?.driver || MOCK_PUTODA_DRIVERS[0]);
-        setTrackingCode(bookRes.ride.trackingCode);
-        setBookingState("ACCEPTED");
-      }, 2500);
+      setTrackingCode(ride.trackingCode);
+
+      // Listen for real-time driver acceptance via Firestore onSnapshot
+      const unsub = subscribeToRide(ride.id, (updatedRide: Ride) => {
+        if (updatedRide.status === "ACCEPTED" && updatedRide.driver) {
+          setAssignedDriver(updatedRide.driver);
+          setBookingState("ACCEPTED");
+        } else if (updatedRide.status === "IN_TRANSIT") {
+          setBookingState("IN_TRANSIT");
+        } else if (updatedRide.status === "COMPLETED") {
+          setBookingState("COMPLETED");
+        }
+      });
+      unsubscribeRef.current = unsub;
+
+      // Automated fallback driver dispatch simulation after 3.5s if no driver is on active console
+      setTimeout(() => {
+        setBookingState((currentState) => {
+          if (currentState === "SEARCHING") {
+            setAssignedDriver(MOCK_PUTODA_DRIVERS[0]);
+            return "ACCEPTED";
+          }
+          return currentState;
+        });
+      }, 3500);
+
     } catch (err) {
       console.error("Booking error:", err);
       // Fallback
@@ -59,13 +110,20 @@ export default function TodaRideBookingPage() {
         setAssignedDriver(MOCK_PUTODA_DRIVERS[0]);
         setTrackingCode(`PUTODA-2026-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
         setBookingState("ACCEPTED");
-      }, 2500);
+      }, 3000);
     }
   };
 
   const handleCancel = () => {
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+    }
     setBookingState("FORM");
     setAssignedDriver(null);
+    setCustomName(null);
+    setCustomPhone(null);
+    setCustomPickupPurok(null);
+    setCustomDiscountType(null);
   };
 
   return (
@@ -90,7 +148,7 @@ export default function TodaRideBookingPage() {
             Book a Tricycle Ride
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            On-demand dispatch with official Pamplona Uno Sangguniang Bayan fare matrix. No overpricing.
+            On-demand dispatch with official Pamplona Uno Sangguniang Bayan fare matrix. Connected to live TODA driver terminals.
           </p>
         </div>
 
@@ -100,8 +158,54 @@ export default function TodaRideBookingPage() {
             onSubmit={handleStartSearch}
             className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-5 animate-in fade-in"
           >
+            {profile ? (
+              <div className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900">
+                <UserCheck className="h-4 w-4 text-blue-700 shrink-0" />
+                <span>
+                  Booking as registered resident: <strong>{profile.fullName}</strong> ({profile.purok})
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
+                <ShieldCheck className="h-4 w-4 text-slate-400 shrink-0" />
+                <span>
+                  <Link href="/login" className="underline font-bold text-blue-900">Sign in</Link> to auto-apply senior/student discounts and save favorite addresses.
+                </span>
+              </div>
+            )}
+
+            {/* Passenger Contact */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Passenger Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={passengerName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="e.g. Maria Santos"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Mobile Number (for Driver Call) *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={passengerPhone}
+                  onChange={(e) => setCustomPhone(e.target.value)}
+                  placeholder="0917-000-0000"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm font-mono text-slate-900"
+                />
+              </div>
+            </div>
+
             {/* Pickup & Dropoff */}
-            <div className="space-y-4">
+            <div className="space-y-4 pt-2 border-t border-slate-100">
               {/* Pickup */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
@@ -111,7 +215,7 @@ export default function TodaRideBookingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <select
                     value={pickupPurok}
-                    onChange={(e) => setPickupPurok(e.target.value)}
+                    onChange={(e) => setCustomPickupPurok(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900 font-semibold"
                   >
                     <option value="Purok 1 (Riverside)">Purok 1 (Riverside Terminal)</option>
@@ -129,7 +233,7 @@ export default function TodaRideBookingPage() {
                     value={pickupLandmark}
                     onChange={(e) => setPickupLandmark(e.target.value)}
                     placeholder="Specific house no., gate, or landmark"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900"
                   />
                 </div>
               </div>
@@ -161,7 +265,7 @@ export default function TodaRideBookingPage() {
                     value={dropoffLandmark}
                     onChange={(e) => setDropoffLandmark(e.target.value)}
                     placeholder="Dropoff street or landmark"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900"
                   />
                 </div>
               </div>
@@ -182,7 +286,7 @@ export default function TodaRideBookingPage() {
                   <button
                     key={d.id}
                     type="button"
-                    onClick={() => setDiscountType(d.id as FareDiscountType)}
+                    onClick={() => setCustomDiscountType(d.id as FareDiscountType)}
                     className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all ${
                       discountType === d.id
                         ? "bg-blue-900 text-white shadow-2xs"
@@ -202,7 +306,7 @@ export default function TodaRideBookingPage() {
                   Official TODA Metered Fare
                 </span>
                 <span className="text-xs text-slate-600">
-                  {discountType !== "REGULAR" ? "Discounted fare (ID checked by driver)" : "Standard single trip fare"}
+                  {discountType !== "REGULAR" ? "Discounted fare (Valid ID presented upon ride)" : "Standard single trip fare"}
                 </span>
               </div>
               <div className="text-right">
@@ -249,28 +353,32 @@ export default function TodaRideBookingPage() {
                 Matching with Online PUTODA Drivers...
               </h2>
               <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                Drivers within your purok are receiving your pickup alert. Please keep this screen open.
+                Drivers within your purok terminal are receiving your pickup alert on Firestore live dispatch.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50"
-            >
-              Cancel Broadcast
-            </button>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50"
+              >
+                Cancel Broadcast
+              </button>
+            </div>
           </div>
         )}
 
         {/* 3. DRIVER ACCEPTED STATE */}
-        {bookingState === "ACCEPTED" && assignedDriver && (
+        {(bookingState === "ACCEPTED" || bookingState === "IN_TRANSIT" || bookingState === "COMPLETED") && assignedDriver && (
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6 animate-in zoom-in-95">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-xs font-black text-emerald-800 uppercase tracking-wider">
-                  Driver Dispatched & On the Way
+                  {bookingState === "ACCEPTED" && "Driver Dispatched & On the Way"}
+                  {bookingState === "IN_TRANSIT" && "Trip In Progress (Passenger On Board)"}
+                  {bookingState === "COMPLETED" && "Trip Completed Successfully"}
                 </span>
               </div>
               <span className="font-mono text-xs font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded">
@@ -335,19 +443,29 @@ export default function TodaRideBookingPage() {
               </div>
             </div>
 
+            {bookingState === "COMPLETED" && (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-900">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0" />
+                <div className="text-xs">
+                  <p className="font-bold">You have safely reached your destination.</p>
+                  <p className="text-emerald-700">Salamat sa pagtangkilik sa Pamplona Uno TODA (PUTODA)!</p>
+                </div>
+              </div>
+            )}
+
             <div className="pt-2 flex items-center justify-between">
               <button
                 type="button"
                 onClick={handleCancel}
                 className="text-xs font-bold text-red-600 hover:underline"
               >
-                Cancel Booking
+                {bookingState === "COMPLETED" ? "Book Another Trip" : "Cancel Booking"}
               </button>
               <Link
                 href="/services/toda/driver"
                 className="text-xs font-bold text-blue-900 hover:underline"
               >
-                Driver View Console →
+                Open Driver View Console →
               </Link>
             </div>
           </div>
